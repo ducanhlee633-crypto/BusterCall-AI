@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import requests
 import json
 from dotenv import load_dotenv
@@ -15,6 +18,9 @@ from db import Base, get_db, engine
 Base.metadata.create_all(bind = engine)
 app = FastAPI()
 load_dotenv()
+
+templates = Jinja2Templates(directory = "templates")
+app.mount("/statics", StaticFiles(directory = "statics"), name = "statics")
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
