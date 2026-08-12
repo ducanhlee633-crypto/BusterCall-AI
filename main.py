@@ -1,12 +1,18 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
 import requests
 import json
 from dotenv import load_dotenv
 import os
-import re
-from schemas import Bounty_evaluator_input, Devil_fruit_evalutor, Bounty_evaluator_output
+from schemas import Bounty_evaluator_input, Devil_fruit_evalutor, Bounty_evaluator_output, UserBase, UserResponse
 from bounty_evaluator_prompt import SYSTEM_PROMPT
+from typing import Annotated
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+import models
+from db import Base, get_db, engine
 
+
+Base.metadata.create_all(bind = engine)
 app = FastAPI()
 load_dotenv()
 
@@ -14,10 +20,33 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 
 
-@app.get("/")
-def home():
-    return {"message":"BusterCall-AI"}
+@app.post("/api/users", response_model = UserResponse, status_code = status.HTTP_201_CREATED)
+def create_user(user : UserBase, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.user_name == user.user_name),)
+    existing_user = result.scalars().first()
+    if existing_user:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "User already exists")
+    result = db.execute(select(models.User).where(models.User.email == user.email),)
+    existing_email = result.scalars().first()
+    if existing_email:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "User already exists")
+    new_user = models.User(
+        user_name = user.user_name,
+        email = user.email
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
+@app.get("/api/users/{id}", response_model = UserResponse)
+def get_user(id : int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == id),)
+    existing_user = result.scalars().first()
+    if existing_user:
+        return existing_user
+    else:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Not Found")
 
 
 @app.post("/api/v1/bounty/assess", response_model = Bounty_evaluator_output) #áp dụng response model

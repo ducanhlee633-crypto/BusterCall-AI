@@ -1,5 +1,14 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
+
+
+class UserBase(BaseModel):
+    user_name : str
+    email: EmailStr
+
+class UserResponse(UserBase):
+    model_config = ConfigDict(from_attributes = True)
+    id : int
 class Bounty_evaluator_input(BaseModel):
     name : str
     crew_name : str
@@ -16,3 +25,4 @@ class  Bounty_evaluator_output(BaseModel):
 
 class Devil_fruit_evalutor(BaseModel):
     devil_fruit : str
+
