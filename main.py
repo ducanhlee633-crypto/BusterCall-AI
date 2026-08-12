@@ -3,14 +3,14 @@ import requests
 import json
 from dotenv import load_dotenv
 import os
-from schemas import Bounty_evaluator_input, Devil_fruit_evalutor, Bounty_evaluator_output, UserBase, UserResponse
-from bounty_evaluator_prompt import SYSTEM_PROMPT
+from schemas import Bounty_evaluator_input, Devil_fruit_evalutor, Bounty_evaluator_output, UserBase, UserResponse, Battle_simulator
+from bounty_evaluator_prompt import SYSTEM_PROMPT_BOUNTY
 from typing import Annotated
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 import models
 from db import Base, get_db, engine
-
+from battle_simulator_prompt import SYSTEM_PROMPT_BATTLE
 
 Base.metadata.create_all(bind = engine)
 app = FastAPI()
@@ -31,7 +31,7 @@ class LLM:
             "messages": [
             {
                 "role": "user",
-                "content": f"{SYSTEM_PROMPT}. {prompt}"
+                "content": f"{prompt}"
             }
             ]
         }),
@@ -75,11 +75,19 @@ def get_user(id : int, db: Annotated[Session, Depends(get_db)]):
 @app.post("/api/v1/bounty/assess", response_model = Bounty_evaluator_output) #áp dụng response model
 def bounty_evaluator(message:Bounty_evaluator_input):
     bounty_evaluator = LLM()
-    prompt = f"Follow the instrution above to analyze.The character is {message.name}, which is in {message.crew_name}. There is some stat and achievement of this character: Devil_Fruit: {message.devil_fruit}; observation_haki:{message.observation_haki}; armament_haki:{message.armament_haki}; conqueror_haki:{message.conqueror_haki}; achievement:{message.achievement}. "
+    prompt = f"{SYSTEM_PROMPT_BOUNTY}. Follow the instrution above to analyze.The character is {message.name}, which is in {message.crew_name}. There is some stat and achievement of this character: Devil_Fruit: {message.devil_fruit}; observation_haki:{message.observation_haki}; armament_haki:{message.armament_haki}; conqueror_haki:{message.conqueror_haki}; achievement:{message.achievement}. "
     result = bounty_evaluator.analyze(prompt)
     return result
 
 
+
+
+@app.post("/api/v1/battle/simulate")
+def battle_simulator(message : Battle_simulator):
+    battle_simulate = LLM()
+    prompt = f"{SYSTEM_PROMPT_BATTLE}. Follow the instrution above to analyze. {message.character_1}vs{message.character_2} in {message.location}"
+    result = battle_simulate.analyze(prompt)
+    return result
 
 @app.post("/api/v1/encyclopedia/query") 
 def encyclopedia(message:Devil_fruit_evalutor):

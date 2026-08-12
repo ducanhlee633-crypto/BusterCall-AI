@@ -18,11 +18,16 @@ class Bounty_evaluator_input(BaseModel):
     conqueror_haki : bool
     achievement : str
 
-class  Bounty_evaluator_output(BaseModel):
+class Bounty_evaluator_output(BaseModel):
     bounty : int = Field(ge = 1000, le = 10000000000)
     threat_level : str = Field(min_length = 1, max_length = 3)
     reasoning : str = Field(min_length = 1)
 
 class Devil_fruit_evalutor(BaseModel):
     devil_fruit : str
+
+class Battle_simulator(BaseModel):
+    character_1: str
+    character_2: str
+    location : str
 
