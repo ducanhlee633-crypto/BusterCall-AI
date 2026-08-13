@@ -31,3 +31,6 @@ class Battle_simulator(BaseModel):
     character_2: str
     location : str
 
+class Update_user(BaseModel):
+    user_name : str
+    email : EmailStr
