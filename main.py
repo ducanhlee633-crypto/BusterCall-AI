@@ -3,7 +3,7 @@ import requests
 import json
 from dotenv import load_dotenv
 import os
-from schemas import Bounty_evaluator_input, Devil_fruit_evalutor, Bounty_evaluator_output, UserBase, UserResponse, Battle_simulator
+from schemas import Bounty_evaluator_input, Devil_fruit_evalutor, Bounty_evaluator_output, UserBase, UserResponse, Battle_simulator,Update_user_partial, Update_user_fully
 from bounty_evaluator_prompt import SYSTEM_PROMPT_BOUNTY
 from typing import Annotated
 from sqlalchemy import select
@@ -95,12 +95,6 @@ def create_user(user : UserBase, db: Annotated[Session, Depends(get_db)]):
     db.refresh(new_user)
     return new_user
 
-@app.put()
-
-
-
-
-
 
 
 
@@ -114,23 +108,60 @@ def get_user(id : int, db: Annotated[Session, Depends(get_db)]):
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Not Found")
 
 
+@app.put("/api/users/{id}", response_model = UserResponse)
+def update_user_fully(id : int,update_user:Update_user_fully, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == id),)
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Not Found")
+    user.user_name = update_user.user_name
+    user.email = update_user.email
+    user.id = update_user.id
+    db.commit()
+    db.refresh(user)
+    return user
+
+@app.patch("/api/users/{id}", response_model = UserResponse)
+def update_user_partly(id : int,update_user:Update_user_partial, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == id),)
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Not Found")
+    update_data = update_user.model_dump(exclude_unset = True)
+    for field, value in update_data.items():
+        setattr(user, field, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+
+@app.delete("/api/users/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(id : int, db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User).where(models.User.id == id),)
+    user = result.scalars().first()
+    if not user:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "Not Found")
+    db.delete(user)
+    db.commit()
+
+
+
+
+
+
 @app.post("/api/v1/bounty/assess", response_model = Bounty_evaluator_output) #áp dụng response model
 def bounty_evaluator(message:Bounty_evaluator_input):
     bounty_evaluator = LLM()
     prompt = f"{SYSTEM_PROMPT_BOUNTY}. Follow the instrution above to analyze.The character is {message.name}, which is in {message.crew_name}. There is some stat and achievement of this character: Devil_Fruit: {message.devil_fruit}; observation_haki:{message.observation_haki}; armament_haki:{message.armament_haki}; conqueror_haki:{message.conqueror_haki}; achievement:{message.achievement}. "
     result = bounty_evaluator.analyze(prompt)
     return result
-
-
-
-
 @app.post("/api/v1/battle/simulate")
 def battle_simulator(message : Battle_simulator):
     battle_simulate = LLM()
     prompt = f"{SYSTEM_PROMPT_BATTLE}. Follow the instrution above to analyze. {message.character_1}vs{message.character_2} in {message.location}"
     result = battle_simulate.analyze(prompt)
     return result
-
 @app.post("/api/v1/encyclopedia/query") 
 def encyclopedia(message:Devil_fruit_evalutor):
     try:
