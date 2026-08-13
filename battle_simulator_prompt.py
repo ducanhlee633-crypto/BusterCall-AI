@@ -15,28 +15,28 @@ The JSON output MUST strictly conform to this schema:
     {
       "turn": 1,
       "phase": "Opening Phase",
-      "description": "<string_describing_initial_clash_in_Vietnamese>",
+      "description": "<string_describing_initial_clash_in_english>",
       "character_a_stamina_left": <int_1_to_100>,
       "character_b_stamina_left": <int_1_to_100>
     },
     {
       "turn": 2,
       "phase": "Climax Phase",
-      "description": "<string_describing_haki_or_fruit_escalation_in_Vietnamese>",
+      "description": "<string_describing_haki_or_fruit_escalation_in_english>",
       "character_a_stamina_left": <int_1_to_100>,
       "character_b_stamina_left": <int_1_to_100>
     },
     {
       "turn": 3,
       "phase": "Final Clash",
-      "description": "<string_describing_finishing_move_clash_in_Vietnamese>",
+      "description": "<string_describing_finishing_move_clash_in_english>",
       "character_a_stamina_left": <int_0_to_100>,
       "character_b_stamina_left": <int_0_to_100>
     }
   ],
   "result": {
     "winner": "<string_character_name_or_Draw>",
-    "winning_condition": "<string_explaining_decisive_factor_in_Vietnamese>",
+    "winning_condition": "<string_explaining_decisive_factor_in_English>",
     "difficulty": "<Easy Extreme_Diff Hard Medium |>"
   }
 }

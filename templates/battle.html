@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Battle Simulator — Buster Call AI{% endblock %}
+
+{% macro char_form(id, title, color) %}
+<div class="form-card">
+  <h2>{{ title }}</h2>
+  <div class="field">
+    <label for="{{ id }}-name">Pirate Name</label>
+    <input id="{{ id }}-name" type="text" required placeholder="e.g. Roronoa Zoro">
+  </div>
+  <div class="field">
+    <label for="{{ id }}-crew">Crew Name</label>
+    <input id="{{ id }}-crew" type="text" required placeholder="e.g. Straw Hat Pirates">
+  </div>
+  <div class="field">
+    <label for="{{ id }}-fruit">Devil Fruit</label>
+    <input id="{{ id }}-fruit" type="text" placeholder="e.g. Yami Yami no Mi, or None">
+  </div>
+  <div class="field">
+    <label>Haki Mastery</label>
+    <div class="chips">
+      <label class="chip"><input type="checkbox" id="{{ id }}-obs"><span>Observation</span></label>
+      <label class="chip"><input type="checkbox" id="{{ id }}-arm"><span>Armament</span></label>
+      <label class="chip"><input type="checkbox" id="{{ id }}-conq"><span>Conqueror</span></label>
+    </div>
+  </div>
+  <div class="field">
+    <label for="{{ id }}-achievement">Achievements</label>
+    <textarea id="{{ id }}-achievement" placeholder="e.g. Cut Kaido, mastered three-sword style..."></textarea>
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<section class="page-head">
+  <h1 class="page-title">Battle <span class="accent">Simulator</span></h1>
+  <p class="page-sub">Pit two pirates against each other on an iconic battlefield. The Tactical Battle Referee narrates every clash turn by turn.</p>
+</section>
+
+<section class="battle-wrap">
+  <div class="battle-grid">
+    {{ char_form('a', 'Pirate A', 'coral') }}
+    <div class="vs">VS</div>
+    {{ char_form('b', 'Pirate B', 'sea') }}
+
+    <div class="form-card" style="grid-column: 1 / -1;">
+      <div class="field">
+        <label for="location">Battlefield</label>
+        <select id="location">
+          <option value="Marineford">Marineford</option>
+          <option value="Dressrosa">Dressrosa</option>
+          <option value="Wano Country">Wano Country</option>
+          <option value="Alabasta">Alabasta</option>
+          <option value="Skypiea">Skypiea</option>
+          <option value="Fish-Man Island">Fish-Man Island</option>
+          <option value="Sabaody Archipelago">Sabaody Archipelago</option>
+          <option value="Whole Cake Island">Whole Cake Island</option>
+          <option value="Enies Lobby">Enies Lobby</option>
+          <option value="Egghead">Egghead</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn" id="submitBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2b2b33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 20 L12 4 L20 20"/>
+            <path d="M6.5 14 H17.5"/>
+            <path d="M9.5 8 H14.5"/>
+          </svg>
+          Ring the Bell!
+        </button>
+      </div>
+      <div id="loading" class="loading" role="status" hidden>
+        <div class="spinner"></div>
+        <p>Refereeing the clash... lightning is in the air...</p>
+      </div>
+      <div id="error" class="error-box" hidden></div>
+    </div>
+  </div>
+</section>
+
+<section class="result-wrap" id="resultWrap" hidden>
+  <div id="banner" class="banner"></div>
+
+  <div class="analysis">
+    <div class="box">
+      <h4 id="advATitle">Pirate A Advantages</h4>
+      <ul class="adv-list" id="advA"></ul>
+    </div>
+    <div class="box">
+      <h4 id="advBTitle">Pirate B Advantages</h4>
+      <ul class="adv-list" id="advB"></ul>
+    </div>
+    <div class="box full">
+      <h4>Environmental Impact</h4>
+      <p id="envImpact" style="font-weight: 600; line-height: 1.6;"></p>
+    </div>
+  </div>
+
+  <div class="banner" style="font-size: 1.4rem; padding: 0.7rem 1rem;">
+    COMBAT LOG
+    <span class="sub">Three decisive turns, narrated by the Referee</span>
+  </div>
+  <div class="log" id="log"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const $ = (id) => document.getElementById(id);
+  const submitBtn = $('submitBtn');
+  const loading = $('loading');
+  const errorBox = $('error');
+  const resultWrap = $('resultWrap');
+
+  const readChar = (id) => ({
+    name: $(id + '-name').value.trim(),
+    crew_name: $(id + '-crew').value.trim(),
+    devil_fruit: $(id + '-fruit').value.trim() || 'None',
+    observation_haki: $(id + '-obs').checked,
+    armament_haki: $(id + '-arm').checked,
+    conqueror_haki: $(id + '-conq').checked,
+    achievement: $(id + '-achievement').value.trim() || 'No known achievements'
+  });
+
+  const setLoading = (on) => {
+    loading.hidden = !on;
+    errorBox.hidden = true;
+    submitBtn.disabled = on;
+  };
+
+  const el = (tag, cls, text) => {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+
+  submitBtn.addEventListener('click', async () => {
+    const a = readChar('a');
+    const b = readChar('b');
+    if (!a.name || !b.name) {
+      errorBox.textContent = 'Both pirates need a name before the bell can ring.';
+      errorBox.hidden = false;
+      return;
+    }
+    resultWrap.hidden = true;
+    setLoading(true);
+    const payload = {
+      character_1: a,
+      character_2: b,
+      location: $('location').value
+    };
+    try {
+      const res = await fetch('/api/v1/battle/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data && data.detail ? data.detail : 'The battle could not be refereed.');
+      render(data, a, b);
+      resultWrap.hidden = false;
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.hidden = false;
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  const render = (data, a, b) => {
+    const pre = data.pre_match_analysis || {};
+    const result = data.result || {};
+
+    const winner = result.winner || 'Draw';
+    const banner = $('banner');
+    banner.innerHTML = '';
+    banner.appendChild(document.createTextNode('WINNER: ' + winner));
+    const sub = el('span', 'sub');
+    sub.textContent = (result.winning_condition || '') + ' — Difficulty: ' + String(result.difficulty || 'Unknown').replace(/_/g, ' ');
+    banner.appendChild(sub);
+
+    $('advATitle').textContent = a.name + ' Advantages';
+    $('advBTitle').textContent = b.name + ' Advantages';
+    const fill = (listId, items) => {
+      const list = $(listId);
+      list.innerHTML = '';
+      (items || []).forEach((item) => list.appendChild(el('li', null, item)));
+    };
+    fill('advA', pre.character_a_advantages);
+    fill('advB', pre.character_b_advantages);
+    $('envImpact').textContent = pre.environmental_impact || '';
+
+    const log = $('log');
+    log.innerHTML = '';
+    (data.combat_log || []).forEach((turn) => {
+      const wrap = el('div', 'turn');
+      wrap.appendChild(el('div', 'phase', 'TURN ' + turn.turn + ' — ' + (turn.phase || '')));
+      wrap.appendChild(el('p', 'desc', turn.description || ''));
+
+      const mkBar = (who, stamina) => {
+        const row = el('div', 'stamina');
+        row.appendChild(el('span', 'who', who));
+        const bar = el('div', 'bar');
+        const fillBar = el('i');
+        fillBar.style.width = Math.max(0, Math.min(100, Number(stamina) || 0)) + '%';
+        bar.appendChild(fillBar);
+        row.appendChild(bar);
+        row.appendChild(el('span', 'num', String(stamina != null ? stamina : 0) + '%'));
+        return row;
+      };
+      wrap.appendChild(mkBar(a.name, turn.character_a_stamina_left));
+      wrap.appendChild(mkBar(b.name, turn.character_b_stamina_left));
+      log.appendChild(wrap);
+    });
+  };
+</script>
+{% endblock %}

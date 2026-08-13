@@ -14,6 +14,9 @@ from battle_simulator_prompt import SYSTEM_PROMPT_BATTLE
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from pathlib import Path
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 
 
 
@@ -189,3 +192,44 @@ def general_http_exception_handler(request:Request, exception: StarletteHTTPExce
             status_code = exception.status_code,
             content =  {"detail": message}
         )
+
+
+# ================================================================
+#  UI LAYER — One Piece Adventure UI (Jinja2 + HTML/CSS)
+#  HTML pages only; the API/backend logic above is untouched.
+# ================================================================
+
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+
+@app.get("/api/users", response_model=list[UserResponse])
+def list_users(db: Annotated[Session, Depends(get_db)]):
+    result = db.execute(select(models.User))
+    return result.scalars().all()
+
+
+@app.get("/", include_in_schema=False)
+def home_page(request: Request):
+    return templates.TemplateResponse(request, "index.html", {"active": "home"})
+
+
+@app.get("/bounty", include_in_schema=False)
+def bounty_page(request: Request):
+    return templates.TemplateResponse(request, "bounty.html", {"active": "bounty"})
+
+
+@app.get("/battle", include_in_schema=False)
+def battle_page(request: Request):
+    return templates.TemplateResponse(request, "battle.html", {"active": "battle"})
+
+
+@app.get("/encyclopedia", include_in_schema=False)
+def encyclopedia_page(request: Request):
+    return templates.TemplateResponse(request, "encyclopedia.html", {"active": "encyclopedia"})
+
+
+@app.get("/crew", include_in_schema=False)
+def crew_page(request: Request):
+    return templates.TemplateResponse(request, "crew.html", {"active": "crew"})

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Buster Call AI — the Grand Line's command center. Assess bounties, simulate legendary battles and discover Devil Fruit lore.">
+  <title>{% block title %}Buster Call AI{% endblock %}</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='62' r='26' fill='white' stroke='%232b2b33' stroke-width='6'/><circle cx='42' cy='58' r='5' fill='%232b2b33'/><circle cx='58' cy='58' r='5' fill='%232b2b33'/><path d='M47 66 l3 -4 3 4 z' fill='%232b2b33'/><ellipse cx='50' cy='36' rx='36' ry='10' fill='%23ffd23f' stroke='%232b2b33' stroke-width='6'/><path d='M36 36 a14 14 0 0 1 28 0 z' fill='%23ffd23f' stroke='%232b2b33' stroke-width='5'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <a class="nav-brand" href="/">
+      <svg viewBox="0 0 120 128" aria-hidden="true">
+        <g stroke="#2b2b33" stroke-width="6" stroke-linecap="round" opacity="0.95">
+          <line x1="16" y1="36" x2="104" y2="100"/>
+          <line x1="104" y1="36" x2="16" y2="100"/>
+        </g>
+        <g stroke="#2b2b33" stroke-width="4">
+          <rect x="36" y="40" width="48" height="42" rx="20" fill="#ffffff"/>
+          <rect x="40" y="72" width="40" height="16" rx="5" fill="#ffffff"/>
+        </g>
+        <g fill="#2b2b33">
+          <circle cx="51" cy="58" r="6"/>
+          <circle cx="69" cy="58" r="6"/>
+          <path d="M57 66 l3 -5 3 5 z"/>
+        </g>
+        <g stroke="#2b2b33" stroke-width="2.5">
+          <line x1="47" y1="80" x2="47" y2="86"/>
+          <line x1="55" y1="80" x2="55" y2="86"/>
+          <line x1="63" y1="80" x2="63" y2="86"/>
+          <line x1="71" y1="80" x2="71" y2="86"/>
+        </g>
+        <g stroke="#2b2b33" stroke-width="4">
+          <ellipse cx="60" cy="42" rx="34" ry="10" fill="#ffd23f"/>
+          <path d="M45 42 a15 15 0 0 1 30 0 z" fill="#ffd23f"/>
+        </g>
+        <path d="M46 46 a15 15 0 0 0 28 0" fill="none" stroke="#2b2b33" stroke-width="3"/>
+        <circle cx="60" cy="34" r="4.5" fill="#ff5a36" stroke="#2b2b33" stroke-width="2.5"/>
+      </svg>
+      <span>BUSTER CALL <em>AI</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="/" class="{{ 'active' if active == 'home' }}">Home</a>
+      <a href="/bounty" class="{{ 'active' if active == 'bounty' }}">Bounty Assessor</a>
+      <a href="/battle" class="{{ 'active' if active == 'battle' }}">Battle Simulator</a>
+      <a href="/encyclopedia" class="{{ 'active' if active == 'encyclopedia' }}">Encyclopedia</a>
+    </div>
+    <a class="nav-icon {{ 'active' if active == 'crew' }}" href="/crew" title="Crew Registry — register &amp; manage contacts" aria-label="Crew Registry">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="7.5" r="4"/>
+        <path d="M4.5 21 c0 -4.6 3.4 -7.4 7.5 -7.4 s7.5 2.8 7.5 7.4"/>
+        <path d="M18.5 3.5 l1.3 1.3 M18.5 3.5 l-1.3 1.3" stroke-width="2"/>
+      </svg>
+    </a>
+  </nav>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <svg class="wave" viewBox="0 0 1440 90" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 30 C 200 70 380 10 600 35 C 800 60 980 80 1180 55 C 1300 40 1380 55 1440 40 L1440 90 L0 90 Z" fill="#fff8e7"/>
+    </svg>
+    <div class="brand">BUSTER CALL AI</div>
+    <p>Powered by the Grand Line Intelligence — fan-made adventure, not affiliated with Eiichiro Oda or Toei Animation.</p>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

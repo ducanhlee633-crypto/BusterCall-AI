@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Bounty Assessor — Buster Call AI{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <h1 class="page-title">Bounty <span class="accent">Assessor</span></h1>
+  <p class="page-sub">Submit a pirate profile and the Grand Line AI of Marine Headquarters will judge their threat and stamp a bounty poster in Berries.</p>
+</section>
+
+<section class="form-wrap">
+  <div class="form-card">
+    <h2>Pirate Profile</h2>
+    <form id="bountyForm" novalidate>
+      <div class="two-col">
+        <div class="field">
+          <label for="name">Pirate Name</label>
+          <input id="name" name="name" type="text" required placeholder="e.g. Monkey D. Luffy">
+        </div>
+        <div class="field">
+          <label for="crew">Crew Name</label>
+          <input id="crew" name="crew" type="text" required placeholder="e.g. Straw Hat Pirates">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fruit">Devil Fruit</label>
+        <input id="fruit" name="fruit" type="text" placeholder="e.g. Gomu Gomu no Mi, or None">
+      </div>
+      <div class="field">
+        <label>Haki Mastery</label>
+        <div class="chips">
+          <label class="chip">
+            <input type="checkbox" id="obs">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2b2b33" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12 C 6 5 18 5 22 12 C 18 19 6 19 2 12 Z"/>
+                <circle cx="12" cy="12" r="3.2"/>
+              </svg>
+              Observation
+            </span>
+          </label>
+          <label class="chip">
+            <input type="checkbox" id="arm">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2b2b33" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2 L20 5 V11 C20 16.5 16.5 20.5 12 22 C7.5 20.5 4 16.5 4 11 V5 Z"/>
+              </svg>
+              Armament
+            </span>
+          </label>
+          <label class="chip">
+            <input type="checkbox" id="conq">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#2b2b33" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 16 L8 7 L12 14 L16 7 L21 16 Z"/>
+                <path d="M3 16 H21 V19 H3 Z"/>
+              </svg>
+              Conqueror
+            </span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="achievement">Achievements</label>
+        <textarea id="achievement" name="achievement" placeholder="e.g. Defeated Kaido, liberated Wano, punched a Celestial Dragon..."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn" id="submitBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2b2b33" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <circle cx="9" cy="10.5" r="1.6" fill="#2b2b33"/>
+            <circle cx="15" cy="10.5" r="1.6" fill="#2b2b33"/>
+            <path d="M10 15 l2 -2.4 2 2.4"/>
+          </svg>
+          Post the Bounty!
+        </button>
+      </div>
+    </form>
+
+    <div id="loading" class="loading" role="status" hidden>
+      <div class="spinner"></div>
+      <p>Summoning the Marines... analyzing threat level...</p>
+    </div>
+
+    <div id="error" class="error-box" hidden></div>
+
+    <div id="result" class="wanted" hidden>
+      <div class="wanted-top">
+        <div>
+          <h2 id="resName">Unknown Pirate</h2>
+          <p class="muted" id="resCrew">Crew unknown</p>
+        </div>
+        <span class="badge" id="resThreat">S</span>
+      </div>
+      <div class="bounty-line"><span class="berry-sym">&#8417;</span> <span id="resBounty">0</span></div>
+      <p class="reasoning" id="resReasoning"></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const $ = (id) => document.getElementById(id);
+  const form = $('bountyForm');
+  const loading = $('loading');
+  const errorBox = $('error');
+  const result = $('result');
+
+  const setLoading = (on) => {
+    loading.hidden = !on;
+    errorBox.hidden = true;
+    $('submitBtn').disabled = on;
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    result.hidden = true;
+    setLoading(true);
+    const payload = {
+      name: $('name').value.trim(),
+      crew_name: $('crew').value.trim(),
+      devil_fruit: $('fruit').value.trim() || 'None',
+      observation_haki: $('obs').checked,
+      armament_haki: $('arm').checked,
+      conqueror_haki: $('conq').checked,
+      achievement: $('achievement').value.trim() || 'No known achievements'
+    };
+    try {
+      const res = await fetch('/api/v1/bounty/assess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data && data.detail ? data.detail : 'The Marines could not complete the assessment.');
+      $('resName').textContent = payload.name;
+      $('resCrew').textContent = 'Crew: ' + payload.crew_name;
+      const level = String(data.threat_level || 'D').trim().toUpperCase();
+      $('resThreat').textContent = level;
+      $('resThreat').className = 'badge badge-' + level;
+      $('resBounty').textContent = Number(data.bounty || 0).toLocaleString('en-US') + ' Berries';
+      $('resReasoning').textContent = data.reasoning || '';
+      result.hidden = false;
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.hidden = false;
+    } finally {
+      setLoading(false);
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Crew Registry — Buster Call AI{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <h1 class="page-title">Crew <span class="accent">Registry</span></h1>
+  <p class="page-sub">Log pirates and their contact emails so the Fleet Admiral can reach them — the cold email raid begins here.</p>
+</section>
+
+<section class="form-wrap">
+  <div class="form-card" style="max-width: 640px;">
+    <h2 id="formTitle">Register a Pirate</h2>
+    <form id="userForm" novalidate>
+      <div class="two-col">
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" required placeholder="e.g. StrawHatCaptain">
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required placeholder="e.g. luffy@strawhats.pirate">
+        </div>
+      </div>
+      <div class="form-actions" style="gap: 1rem; flex-wrap: wrap;">
+        <button type="submit" class="btn" id="submitBtn">Register</button>
+        <button type="button" class="btn btn-ghost" id="cancelEdit" hidden>Cancel</button>
+      </div>
+    </form>
+
+    <div id="loading" class="loading" role="status" hidden>
+      <div class="spinner"></div>
+      <p>Updating the registry...</p>
+    </div>
+
+    <div id="error" class="error-box" hidden></div>
+  </div>
+</section>
+
+<section class="registry">
+  <div class="registry-head">
+    <h2>Registered Pirates</h2>
+    <button type="button" class="btn-sm btn-edit" id="copyEmails">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="12" height="12" rx="2"/>
+        <path d="M5 15 H4 a2 2 0 0 1 -2 -2 V4 a2 2 0 0 1 2 -2 h9 a2 2 0 0 1 2 2 v1"/>
+      </svg>
+      Copy All Emails
+    </button>
+  </div>
+  <div class="table-wrap">
+    <table class="registry-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const $ = (id) => document.getElementById(id);
+  const API = '/api/users';
+  let editingId = null;
+
+  const form = $('userForm');
+  const tableBody = $('rows');
+  const loading = $('loading');
+  const errorBox = $('error');
+  const submitBtn = $('submitBtn');
+  const cancelBtn = $('cancelEdit');
+  const formTitle = $('formTitle');
+
+  const setLoading = (on) => {
+    loading.hidden = !on;
+    errorBox.hidden = true;
+    submitBtn.disabled = on;
+  };
+
+  const showError = (msg) => {
+    errorBox.textContent = msg;
+    errorBox.hidden = false;
+  };
+
+  const errMsg = (data, fallback) => {
+    if (data && data.detail) {
+      if (Array.isArray(data.detail)) return data.detail.map((d) => d.msg).join('; ');
+      return String(data.detail);
+    }
+    return fallback;
+  };
+
+  const td = (text) => {
+    const cell = document.createElement('td');
+    cell.textContent = text;
+    return cell;
+  };
+
+  const renderTable = (users) => {
+    tableBody.innerHTML = '';
+    if (!users.length) {
+      const tr = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 4;
+      cell.textContent = 'No pirates have registered yet. Set sail with the form above!';
+      cell.style.cssText = 'text-align:center;padding:1.8rem;font-weight:800;color:#7a6a45;';
+      tr.appendChild(cell);
+      tableBody.appendChild(tr);
+      return;
+    }
+    users.forEach((u) => {
+      const tr = document.createElement('tr');
+      tr.appendChild(td(u.id));
+      tr.appendChild(td(u.user_name));
+      tr.appendChild(td(u.email));
+
+      const actions = document.createElement('td');
+      const wrap = document.createElement('div');
+      wrap.className = 'actions-cell';
+
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn-sm btn-edit';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => startEdit(u));
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-sm btn-del';
+      delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', () => delUser(u.id));
+
+      wrap.appendChild(editBtn);
+      wrap.appendChild(delBtn);
+      actions.appendChild(wrap);
+      tr.appendChild(actions);
+      tableBody.appendChild(tr);
+    });
+  };
+
+  const loadUsers = async () => {
+    try {
+      const res = await fetch(API);
+      const data = await res.json().catch(() => []);
+      if (!res.ok) throw new Error(errMsg(data, 'Could not load the registry.'));
+      renderTable(data);
+    } catch (err) {
+      showError(err.message);
+    }
+  };
+
+  const resetForm = () => {
+    editingId = null;
+    form.reset();
+    formTitle.textContent = 'Register a Pirate';
+    submitBtn.textContent = 'Register';
+    cancelBtn.hidden = true;
+  };
+
+  const startEdit = (u) => {
+    editingId = u.id;
+    $('username').value = u.user_name;
+    $('email').value = u.email;
+    formTitle.textContent = 'Edit Pirate #' + u.id;
+    submitBtn.textContent = 'Update Pirate';
+    cancelBtn.hidden = false;
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      user_name: $('username').value.trim(),
+      email: $('email').value.trim()
+    };
+    setLoading(true);
+    try {
+      const res = await fetch(editingId ? API + '/' + editingId : API, {
+        method: editingId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(errMsg(data, 'The registry rejected the request.'));
+      resetForm();
+      await loadUsers();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  cancelBtn.addEventListener('click', resetForm);
+
+  const delUser = async (id) => {
+    if (!window.confirm('Delete this pirate from the registry? Their email can no longer be raided.')) return;
+    setLoading(true);
+    try {
+      const res = await fetch(API + '/' + id, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(errMsg(data, 'Delete failed.'));
+      }
+      if (editingId === id) resetForm();
+      await loadUsers();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  $('copyEmails').addEventListener('click', async () => {
+    try {
+      const res = await fetch(API);
+      const users = await res.json().catch(() => []);
+      if (!res.ok || !users.length) throw new Error('The registry is empty — nothing to copy.');
+      await navigator.clipboard.writeText(users.map((u) => u.email).join(', '));
+      $('copyEmails').textContent = 'Copied!';
+      setTimeout(() => { $('copyEmails').textContent = 'Copy All Emails'; }, 1500);
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
+  loadUsers();
+</script>
+{% endblock %}

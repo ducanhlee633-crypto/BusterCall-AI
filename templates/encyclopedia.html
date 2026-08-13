@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Devil Fruit Encyclopedia — Buster Call AI{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <h1 class="page-title">Devil Fruit <span class="accent">Encyclopedia</span></h1>
+  <p class="page-sub">Search the Grand Line registry and unveil the legend behind any Devil Fruit — its power, its type and its story.</p>
+</section>
+
+<section class="encyclopedia-wrap">
+  <div class="form-card" style="max-width: 640px;">
+    <h2>Search the Registry</h2>
+    <form id="fruitForm" novalidate>
+      <div class="field">
+        <label for="fruitName">Devil Fruit Name</label>
+        <input id="fruitName" type="text" required placeholder="e.g. Gomu Gomu no Mi, Mera Mera no Mi">
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn" id="submitBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2b2b33" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10.5" cy="10.5" r="6.5"/>
+            <path d="M15.5 15.5 L21 21"/>
+          </svg>
+          Search the Log!
+        </button>
+      </div>
+    </form>
+
+    <div id="loading" class="loading" role="status" hidden>
+      <div class="spinner"></div>
+      <p>Scanning the Grand Line database...</p>
+    </div>
+
+    <div id="error" class="error-box" hidden></div>
+
+    <div id="result" class="fruit-card" hidden>
+      <img id="fruitImg" class="fruit-img" alt="Devil Fruit">
+      <div class="fruit-info">
+        <h2 id="fruitNameOut"></h2>
+        <div class="roman" id="fruitRoman"></div>
+        <span class="fruit-type" id="fruitType"></span>
+        <p id="fruitDesc"></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const $ = (id) => document.getElementById(id);
+  const form = $('fruitForm');
+  const loading = $('loading');
+  const errorBox = $('error');
+  const result = $('result');
+
+  const setLoading = (on) => {
+    loading.hidden = !on;
+    errorBox.hidden = true;
+    $('submitBtn').disabled = on;
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    result.hidden = true;
+    setLoading(true);
+    const term = $('fruitName').value.trim();
+    try {
+      const res = await fetch('/api/v1/encyclopedia/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ devil_fruit: term })
+      });
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok) throw new Error(data && data.detail ? data.detail : 'The registry could not be reached.');
+      if (!data || !data.name) throw new Error('"' + term + '" was not found in the Grand Line registry. Try the romanized name, e.g. "Gomu Gomu no Mi".');
+      render(data);
+      result.hidden = false;
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.hidden = false;
+    } finally {
+      setLoading(false);
+    }
+  });
+
+  const render = (data) => {
+    $('fruitNameOut').textContent = data.name || 'Unknown Fruit';
+    $('fruitRoman').textContent = data.roman_name || '';
+    $('fruitType').textContent = data.type || 'Unknown Type';
+    $('fruitDesc').textContent = data.description || '';
+    const img = $('fruitImg');
+    const raw = data.filename || '';
+    if (raw) {
+      img.src = raw.startsWith('http') ? raw : 'https://images.api-onepiece.com/fruits/' + raw;
+      img.onerror = () => { img.style.visibility = 'hidden'; };
+      img.style.visibility = 'visible';
+    } else {
+      img.style.visibility = 'hidden';
+    }
+  };
+</script>
+{% endblock %}

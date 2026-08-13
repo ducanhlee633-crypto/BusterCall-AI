@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Buster Call AI — Set Sail, Captain!{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <span class="spark" style="top: 18%; left: 8%; font-size: 1.6rem;">&#10022;</span>
+  <span class="spark" style="top: 64%; left: 14%; font-size: 1rem; animation-delay: 1.2s;">&#10038;</span>
+  <span class="spark" style="top: 12%; right: 10%; font-size: 1.3rem; animation-delay: 0.6s;">&#10022;</span>
+  <span class="spark" style="bottom: 18%; right: 16%; font-size: 1.7rem; animation-delay: 2s;">&#10038;</span>
+  <div class="inner">
+    <span class="eyebrow">Grand Line Edition</span>
+    <h1>SET SAIL,<br><span class="accent">CAPTAIN!</span></h1>
+    <p class="tagline">
+      Welcome aboard the Grand Line's boldest command center. Judge pirate bounties,
+      simulate legendary clashes and uncover Devil Fruit lore — all while the sun
+      shines on your adventure.
+    </p>
+    <div class="hero-cta">
+      <a class="btn" href="#tools">Begin the Adventure</a>
+    </div>
+  </div>
+  <svg class="wave" viewBox="0 0 1440 110" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; bottom: -1px; left: 0;">
+    <path d="M0 60 C 180 100 340 20 520 45 C 700 70 860 100 1040 80 C 1180 64 1320 90 1440 55 L1440 110 L0 110 Z" fill="#1a6fae"/>
+    <path d="M0 80 C 220 110 420 40 640 60 C 860 80 1040 105 1220 85 C 1320 76 1390 88 1440 72 L1440 110 L0 110 Z" fill="#0b3d6b"/>
+  </svg>
+</section>
+
+<section class="tools" id="tools">
+  <div class="section-head">
+    <h2>CHOOSE YOUR DECK</h2>
+    <p>Three mighty tools await their captain</p>
+  </div>
+  <div class="cards">
+    <a class="tool-card" href="/bounty">
+      <span class="sticker">JUDGE</span>
+      <div class="icon">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <g fill="none" stroke="#2b2b33" stroke-width="3" stroke-linecap="round">
+            <line x1="10" y1="14" x2="54" y2="50"/>
+            <line x1="54" y1="14" x2="10" y2="50"/>
+          </g>
+          <rect x="18" y="18" width="28" height="26" rx="12" fill="none" stroke="#2b2b33" stroke-width="3"/>
+          <g fill="#2b2b33">
+            <circle cx="26" cy="27" r="4.5"/>
+            <circle cx="38" cy="27" r="4.5"/>
+            <path d="M29 35 l3 -4 3 4 z"/>
+          </g>
+          <g stroke="#2b2b33" stroke-width="2.4">
+            <line x1="24" y1="41" x2="24" y2="44"/>
+            <line x1="29" y1="41" x2="29" y2="44"/>
+            <line x1="34" y1="41" x2="34" y2="44"/>
+            <line x1="39" y1="41" x2="39" y2="44"/>
+          </g>
+        </svg>
+      </div>
+      <h3>Bounty Assessor</h3>
+      <p>Hand your pirate profile to the World Government's Grand Line AI and watch your bounty poster get stamped — in Berries.</p>
+      <span class="go">Post the Bounty</span>
+    </a>
+
+    <a class="tool-card" href="/battle">
+      <span class="sticker">CLASH</span>
+      <div class="icon">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <g stroke="#2b2b33" stroke-width="3.5" stroke-linecap="round" fill="none">
+            <path d="M14 14 L44 44"/>
+            <path d="M50 14 L20 44"/>
+            <path d="M37 33 L49 21"/>
+            <path d="M43 39 L55 27"/>
+          </g>
+          <g stroke="#2b2b33" stroke-width="3" stroke-linecap="round">
+            <path d="M10 54 L26 38"/>
+            <path d="M16 58 L32 42"/>
+          </g>
+        </svg>
+      </div>
+      <h3>Battle Simulator</h3>
+      <p>Two pirates. One battlefield. The Tactical Battle Referee narrates every turn until only one stands victorious.</p>
+      <span class="go">Ring the Bell</span>
+    </a>
+
+    <a class="tool-card" href="/encyclopedia">
+      <span class="sticker">LORE</span>
+      <div class="icon">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 20 c-7 -9 -18 -6 -18 2 c0 13 18 24 18 36 c0 -12 18 -23 18 -36 c0 -8 -11 -11 -18 -2 z" fill="none" stroke="#2b2b33" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M32 20 c0 -7 5 -9 9 -8" fill="none" stroke="#2b2b33" stroke-width="3" stroke-linecap="round"/>
+          <path d="M32 16 c-2 -5 -7 -7 -10 -4" fill="none" stroke="#2b2b33" stroke-width="3" stroke-linecap="round"/>
+          <path d="M24 14 c-2 -6 2 -9 7 -7" fill="none" stroke="#2b2b33" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3>Devil Fruit Encyclopedia</h3>
+      <p>Search the Grand Line's fruit registry and unveil the power, type and legend behind every Devil Fruit.</p>
+      <span class="go">Search the Log</span>
+    </a>
+  </div>
+</section>
+{% endblock %}
